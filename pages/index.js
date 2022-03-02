@@ -1,12 +1,13 @@
 import Head from "next/head";
 import Image from "next/image";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Button, Row, Col, Input, Space, Radio, Card, List, Layout, Menu, Typography } from "antd";
 
 import Link from "next/link";
 import { AuthUserContext } from "../utils/auth";
 
 import { archetypes } from "../components/constants";
+import { validateCallback } from "@firebase/util";
 
 const { Meta } = Card
 const { Header, Content, Footer } = Layout;
@@ -60,6 +61,15 @@ function highlight(original_text) {
 
 export default function Home() {
   const userContext = useContext(AuthUserContext);
+  const [annotationState, setAnnotationState] = useState({ 
+    "document_original": "To Kara's astonishment, she discovers that a portal has opened in her bedroom closet and two goblins have fallen through! They refuse to return to the fairy realms and be drafted for an impending war. In an attempt to roust the pesky creatures, Kara falls through the portal, smack into the middle of a huge war. Kara meets Queen Selinda, who appoints Kara as a Fairy Princess and assigns her an impossible task: to put an end to the war using her diplomatic skills. \n All's Fairy In Love And War is the eighth book in Avalon: Web of Magic, a twelve-book fantasy series for middle grade readers. Through their magical journey, the teenage heroines discover who they really are . . . and run into plenty of good guys, bad guys, and cute guys. Out of print for two years, Seven Seas is pleased to return the Avalon series to print in editions targeted for today's readers, with new manga-style covers and interior illustrations.",
+    "document": "To Kara's astonishment, she discovers that a portal has opened in her bedroom closet and two goblins have fallen through! They refuse to return to the fairy realms and be drafted for an impending war. In an attempt to roust the pesky creatures, Kara falls through the portal, smack into the middle of a huge war. Kara meets Queen Selinda, who appoints Kara as a Fairy Princess and assigns her an impossible task: to put an end to the war using her diplomatic skills. <br> All's Fairy In Love And War is the eighth book in Avalon: Web of Magic, a twelve-book fantasy series for middle grade readers. Through their magical journey, the teenage heroines discover who they really are . . . and run into plenty of good guys, bad guys, and cute guys. Out of print for two years, Seven Seas is pleased to return the Avalon series to print in editions targeted for today's readers, with new manga-style covers and interior illustrations.",
+    "first_name": "Kara",
+    "last_name": "",
+    "gender": "female",
+    "archetype": "",
+    "annotator": "",
+  })
 
   var annotation_data = { 
     "document_original": "To Kara's astonishment, she discovers that a portal has opened in her bedroom closet and two goblins have fallen through! They refuse to return to the fairy realms and be drafted for an impending war. In an attempt to roust the pesky creatures, Kara falls through the portal, smack into the middle of a huge war. Kara meets Queen Selinda, who appoints Kara as a Fairy Princess and assigns her an impossible task: to put an end to the war using her diplomatic skills. \n All's Fairy In Love And War is the eighth book in Avalon: Web of Magic, a twelve-book fantasy series for middle grade readers. Through their magical journey, the teenage heroines discover who they really are . . . and run into plenty of good guys, bad guys, and cute guys. Out of print for two years, Seven Seas is pleased to return the Avalon series to print in editions targeted for today's readers, with new manga-style covers and interior illustrations.",
@@ -108,8 +118,8 @@ export default function Home() {
             </Col>
             <Col span={8} style={{textAlign:"center"}}>
               <Space style={{paddingBottom:"10px"}}>
-                <Input id="first_name" defaultValue={annotation_data.first_name} onChange={() => highlight(annotation_data.document)}></Input>
-                <Input id="last_name" defaultValue={annotation_data.last_name} onChange={() => highlight(annotation_data.document)}></Input>
+                <Input id="first_name" defaultValue={annotation_data.first_name} placeholder={"First Name"} onChange={() => highlight(annotation_data.document)}></Input>
+                <Input id="last_name" defaultValue={annotation_data.last_name} placeholder={"Last Name"} onChange={() => highlight(annotation_data.document)}></Input>
               </Space>
               <Radio.Group defaultValue={annotation_data.gender} buttonStyle="solid" style={{paddingBottom:"10px"}}>
                 <Radio.Button value="male">Male</Radio.Button>
@@ -122,20 +132,39 @@ export default function Home() {
                 renderItem={item => (
                   <List.Item>
                     <Card hoverable 
-                      style={{width:"100%", height:"70px", marginBottom:"-10px", textAlign:"center"}}
-                      bodyStyle={{paddingLeft: "0", paddingRight: "0"}}>
+                      id={item.title}
+                      onClick={(e) => setAnnotationState({... annotationState, archetype: e.currentTarget.id})}
+                      style={{
+                        width:"100%", 
+                        height:"70px", 
+                        marginBottom:"-10px", 
+                        textAlign:"center",
+                        backgroundColor: annotationState.archetype == item.title ? '#1979FE' : '',
+                        color: annotationState.archetype == item.title ? 'white' : ''}}
+                      bodyStyle={{
+                        paddingLeft: "0", 
+                        paddingRight: "0", 
+                      }}>
                         {item.title}
                     </Card>
                   </List.Item>
                 )}
               />
               <Card hoverable 
-                style={{width:"100%", height:"35px", textAlign:"center"}}
+                id={'None'}
+                onClick={(e) => setAnnotationState({... annotationState, archetype: 'None'})}
+                style={{
+                  width:"100%", 
+                  height:"35px", 
+                  textAlign:"center", 
+                  backgroundColor: annotationState.archetype == 'None' ? '#1979FE' : '',
+                  color: annotationState.archetype == 'None' ? 'white' : ''
+                }}
                 bodyStyle={{paddingLeft: "0", paddingRight: "0", paddingTop:"6px"}}>
                   None
               </Card>
               <Row justify="end" style={{paddingTop:"30px", paddingBottom:"10px"}}>
-                <Button type="primary">
+                <Button type="primary" onClick={() => console.log(annotationState)}>
                   Submit
                 </Button>
               </Row>
