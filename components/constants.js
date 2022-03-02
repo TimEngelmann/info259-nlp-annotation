@@ -1,0 +1,88 @@
+const archetypes = [
+    {
+        title: 'Lover',
+        description: 'The romantic lead who’s guided by the heart.',
+        strengths:  'humanism, passion, conviction',
+        weaknesses: 'naivete, irrationality',
+        examples: 'Romeo and Juliet (Romeo and Juliet), Noah Calhoun (The Notebook), Scarlett O’Hara (Gone With the Wind), Belle (Beauty and the Beast)',
+    },
+    {
+        title: 'Hero',
+        description: 'The romantic lead who’s guided by the heart.',
+        strengths:  'humanism, passion, conviction',
+        weaknesses: 'naivete, irrationality',
+        examples: 'Romeo and Juliet (Romeo and Juliet), Noah Calhoun (The Notebook), Scarlett O’Hara (Gone With the Wind), Belle (Beauty and the Beast)',
+    },
+    {
+        title: 'Magician',
+        description: 'The romantic lead who’s guided by the heart.',
+        strengths:  'humanism, passion, conviction',
+        weaknesses: 'naivete, irrationality',
+        examples: 'Romeo and Juliet (Romeo and Juliet), Noah Calhoun (The Notebook), Scarlett O’Hara (Gone With the Wind), Belle (Beauty and the Beast)',
+    },
+    {
+        title: 'Outlaw',
+        description: 'The romantic lead who’s guided by the heart.',
+        strengths:  'humanism, passion, conviction',
+        weaknesses: 'naivete, irrationality',
+        examples: 'Romeo and Juliet (Romeo and Juliet), Noah Calhoun (The Notebook), Scarlett O’Hara (Gone With the Wind), Belle (Beauty and the Beast)',
+    },
+    {
+        title: 'Explorer',
+        description: 'The romantic lead who’s guided by the heart.',
+        strengths:  'humanism, passion, conviction',
+        weaknesses: 'naivete, irrationality',
+        examples: 'Romeo and Juliet (Romeo and Juliet), Noah Calhoun (The Notebook), Scarlett O’Hara (Gone With the Wind), Belle (Beauty and the Beast)',
+    },
+    {
+        title: 'Sage',
+        description: 'The romantic lead who’s guided by the heart.',
+        strengths:  'humanism, passion, conviction',
+        weaknesses: 'naivete, irrationality',
+        examples: 'Romeo and Juliet (Romeo and Juliet), Noah Calhoun (The Notebook), Scarlett O’Hara (Gone With the Wind), Belle (Beauty and the Beast)',
+    },
+    {
+        title: 'Innocent',
+        description: 'The romantic lead who’s guided by the heart.',
+        strengths:  'humanism, passion, conviction',
+        weaknesses: 'naivete, irrationality',
+        examples: 'Romeo and Juliet (Romeo and Juliet), Noah Calhoun (The Notebook), Scarlett O’Hara (Gone With the Wind), Belle (Beauty and the Beast)',
+    },
+    {
+        title: 'Creator',
+        description: 'The romantic lead who’s guided by the heart.',
+        strengths:  'humanism, passion, conviction',
+        weaknesses: 'naivete, irrationality',
+        examples: 'Romeo and Juliet (Romeo and Juliet), Noah Calhoun (The Notebook), Scarlett O’Hara (Gone With the Wind), Belle (Beauty and the Beast)',
+    },
+    {
+        title: 'Ruler',
+        description: 'The romantic lead who’s guided by the heart.',
+        strengths:  'humanism, passion, conviction',
+        weaknesses: 'naivete, irrationality',
+        examples: 'Romeo and Juliet (Romeo and Juliet), Noah Calhoun (The Notebook), Scarlett O’Hara (Gone With the Wind), Belle (Beauty and the Beast)',
+    },
+    {
+        title: 'Caregiver',
+        description: 'The romantic lead who’s guided by the heart.',
+        strengths:  'humanism, passion, conviction',
+        weaknesses: 'naivete, irrationality',
+        examples: 'Romeo and Juliet (Romeo and Juliet), Noah Calhoun (The Notebook), Scarlett O’Hara (Gone With the Wind), Belle (Beauty and the Beast)',
+    },
+    {
+        title: 'Everyman',
+        description: 'The romantic lead who’s guided by the heart.',
+        strengths:  'humanism, passion, conviction',
+        weaknesses: 'naivete, irrationality',
+        examples: 'Romeo and Juliet (Romeo and Juliet), Noah Calhoun (The Notebook), Scarlett O’Hara (Gone With the Wind), Belle (Beauty and the Beast)',
+    },
+    {
+        title: 'Jester',
+        description: 'The romantic lead who’s guided by the heart.',
+        strengths:  'humanism, passion, conviction',
+        weaknesses: 'naivete, irrationality',
+        examples: 'Romeo and Juliet (Romeo and Juliet), Noah Calhoun (The Notebook), Scarlett O’Hara (Gone With the Wind), Belle (Beauty and the Beast)',
+    },
+  ];
+
+export { archetypes }
