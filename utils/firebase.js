@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, getDocs } from "firebase/firestore";
+import { getFirestore, collection, doc, getDocs, setDoc, getDoc, onSnapshot } from "firebase/firestore";
+import { query, where, orderBy, limit } from "firebase/firestore"; 
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
@@ -23,4 +24,56 @@ const getUsers = async () => {
   usersSnapshot.docs.forEach((doc) => console.log(doc.data()));
 };
 
-export { auth, db, getUsers };
+// Annotation Functions
+
+const updateAnnotation = (annotationState, annotator) => {
+  console.log(annotationState)
+  const annotationRef = doc(db, "annotations", annotationState.book_id);
+  setDoc(annotationRef, { 
+    description_original: annotationState.description_original, 
+    description: annotationState.description, 
+    first_name: annotationState.first_name, 
+    last_name: annotationState.last_name,
+    gender: annotationState.gender,
+    archetype: annotationState.archetype ,
+    annotator: annotator} ,
+    { merge: true },
+    );
+}
+
+const getAnnotations = async (annotationsArray, setAnnotationArray) => { 
+    console.log("Making request to get annotations")
+    const annotationCol = collection(db, "annotations");
+    const q = query(annotationCol, where("annotator", "==", ""), limit(3));
+    const querySnapshot = await getDocs(q);
+
+    var annotations = []
+    querySnapshot.forEach((doc) => {
+      // doc.data() is never undefined for query doc snapshots
+      var annotation = doc.data()
+      annotation.book_id = doc.id
+      annotations.push(annotation)
+    });
+
+    const all_annotations = annotationsArray.concat(annotations)
+    console.log("Here is what I now have in total: ", all_annotations)
+    setAnnotationArray(all_annotations)
+}
+
+const getAnnotationsLive = async (setAnnotationArray) => { 
+  const annotationCol = collection(db, "annotations");
+  const q = query(annotationCol, where("annotator", "==", ""), limit(3));
+  
+  const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const annotations = []
+    querySnapshot.forEach((doc) => {
+      // doc.data() is never undefined for query doc snapshots
+      var annotation = doc.data()
+      annotation.book_id = doc.id
+      annotations.push(annotation)
+    });
+    setAnnotationArray(annotations)
+  });
+}
+
+export { auth, db, getUsers, updateAnnotation, getAnnotations, getAnnotationsLive };
