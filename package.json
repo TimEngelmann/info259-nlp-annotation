@@ -1,5 +1,5 @@
 {
-  "name": "project_1",
+  "name": "info259-nlp-annotation",
   "private": true,
   "scripts": {
     "dev": "next dev",
