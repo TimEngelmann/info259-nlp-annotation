@@ -1,20 +1,24 @@
 import Head from "next/head";
 import { useContext, useEffect, useState } from "react";
-import { Button, Row, Col, Input, Space, Radio, Card, List, Layout, Spin, Typography } from "antd";
+import { Button, Row, Col, Input, Space, Radio, Card, List, Layout, Spin, Typography, Result, Popover, Switch, Dropdown, Menu } from "antd";
+import { DownOutlined, UserOutlined } from '@ant-design/icons';
 
 import Link from "next/link";
 import { AuthUserContext } from "../utils/auth";
-import { getAnnotations, getAnnotationsLive, updateAnnotation } from "../utils/firebase";
+import { getAnnotations, getAnnotationsLive, getRelatedAnnotations, updateAnnotation } from "../utils/firebase";
 
 import { archetypes } from "../components/constants";
 
 const { Header, Content } = Layout;
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 function highlightedString(original_text, first_name, last_name) {
+
+  var text = original_text.replaceAll("\n", "<br>")
+
   if (first_name != "" || last_name != ""){
     var splitted_string = []
-    var remaining_text = original_text
+    var remaining_text = text
     var index_first = 0
     var index_last = 0
     var index = 0
@@ -49,31 +53,51 @@ function highlightedString(original_text, first_name, last_name) {
     splitted_string.push(remaining_text)
     return splitted_string.join('');
   } else{
-    return original_text;
+    return text;
   }
 }
+
+const popoverContent = (item) => (
+  <div style={{maxWidth: "300px"}}>
+    <Title level={5}>Description</Title>
+    <Text>{item.description}</Text>
+    <Title level={5}>Strengths</Title>
+    <Text>{item.strengths}</Text>
+    <Title level={5}>Weaknesses</Title>
+    <Text>{item.weaknesses}</Text>
+    <Title level={5}>Examples</Title>
+    <Text>{item.examples}</Text>
+  </div>
+);
 
 export default function Home() {
   const userContext = useContext(AuthUserContext);
   const [annotationIdx, setAnnotationIdx] = useState(0)
+  const [showDetails, setShowDetails] = useState(true)
   const [annotationsArray, setAnnotationArray] = useState([])
   const [annotationState, setAnnotationState] = useState({})
+  const [relatedAnnotations, setRelatedAnnotations] = useState([])
+  const [relatedIdx, setRelatedIdx] = useState('0')
 
   useEffect(() => {
-    getAnnotations(annotationsArray, setAnnotationArray)
-  }, []);
+    getAnnotations(userContext.userDoc.annotator_id, annotationsArray, setAnnotationArray)
+  }, [userContext]);
 
   useEffect(() =>{
-    console.log("I want to look at: ", annotationIdx)
     if (annotationsArray.length > annotationIdx){
-      console.log("Now lets set it: ", annotationIdx)
       setAnnotationState(annotationsArray[annotationIdx])
     }
   }, [annotationsArray]);
 
   useEffect(() => {
-    if(Object.keys(annotationState).length !== 0){
-      const highlighted_text = highlightedString(annotationState.description, annotationState.first_name, annotationState.last_name)
+    if(Object.keys(annotationState).length > 1){
+      if(annotationState.adjudicated === "adjudicated"){
+        if(relatedAnnotations.length === 0 || relatedAnnotations[0].book_id !== annotationState.book_id){
+          getRelatedAnnotations(annotationState, setRelatedAnnotations)
+        }
+      }
+
+      const highlighted_text = highlightedString(annotationState.text, annotationState.first_name, annotationState.last_name)
       const decriptionText = document.getElementById("descriptionText");
       decriptionText.innerHTML = highlighted_text;
     }
@@ -86,8 +110,20 @@ export default function Home() {
     return false
   }
 
+  const checkArchetypeColor = (title) => {
+    if (annotationState.archetype === title){
+      if (relatedIdx !== '0'){
+        return '#DDDDDD'
+      } else{
+        return '#1890ff'
+      }
+    } 
+
+    return ""
+  }
+
   const submitAnnotation = () => {
-    updateAnnotation(annotationState, userContext.userDoc.name)
+    updateAnnotation(annotationState)
     annotationState.submitted = true
     annotationsArray[annotationIdx] = annotationState
     setAnnotationIdx(annotationIdx + 1)
@@ -107,10 +143,19 @@ export default function Home() {
       setAnnotationState(annotationsArray[annotationIdx])
     } else{
       if(annotationIdx > 0){
-        getAnnotations(annotationsArray, setAnnotationArray)
+        getAnnotations(userContext.userDoc.annotator_id, annotationsArray, setAnnotationArray)
       }
     }
   }, [annotationIdx]);
+
+  const dropdownContent = (relatedAnnotations) => (
+    <Menu defaultSelectedKeys={['0']} selectedKeys={[relatedIdx]}>
+      {relatedAnnotations.map((item, index) => {
+        const key = index;
+        return <Menu.Item key={key} onClick={(e) => {setRelatedIdx(e.key); setAnnotationState(relatedAnnotations[e.key])}}>{item.annotator_id}</Menu.Item>;
+      })}
+    </Menu>
+  )
 
   return (
     <Layout className="layout">
@@ -138,29 +183,60 @@ export default function Home() {
       </Header>
       <Content style={{ padding: '0 50px', minHeight: 'calc(100vh - 65px)', margin:"auto"}}>
         {Object.keys(annotationState).length === 0 && (<Spin style={{marginTop: "50px"}}/>)}
-        {Object.keys(annotationState).length !== 0 && (
+        {Object.keys(annotationState).length === 1 && (
+          <Result
+            status="success"
+            title="Congratulations!"
+            subTitle="You've annotated all the data assigned to you"
+            extra={[
+              <Button 
+                type="secondary" 
+                key={"previous"}
+                onClick={() => previousAnnotation()}
+                disabled={annotationIdx == 0 ? true : false}>
+                Previous
+              </Button>
+            ]}
+          />
+        )}
+        {Object.keys(annotationState).length > 1 && (
           <div className="site-layout-content">
-            <h1>INFO259 Character Annotation</h1>
             <Row>
               <Col span={16} style={{paddingRight: "20px", textAlign:"justify"}}>
+                <h1>INFO259 Character Annotation</h1>
                 <Text id="descriptionText"/>
               </Col>
               <Col span={8} style={{textAlign:"center"}}>
+                <Row style={{height: "33px", marginBottom:"8px"}} justify={relatedAnnotations.length > 0 ? "space-between" : "end"} align="middle">
+                  {relatedAnnotations.length > 0 && (
+                    <Dropdown overlay={dropdownContent(relatedAnnotations)}>
+                      <Button size="small">
+                        Annotation <DownOutlined />
+                      </Button>
+                    </Dropdown>
+                  )}
+                  <Space>
+                    <Text style={{color:"lightgrey"}}>Explain archetypes:</Text>
+                    <Switch style={{marginBottom:"2px"}} size="small" defaultChecked onChange={() => setShowDetails(!showDetails)}/>
+                  </Space>
+                </Row>
                 <Space style={{paddingBottom:"10px"}}>
                   <Input 
                     id="first_name" 
                     value={annotationState.first_name} 
                     placeholder={"First Name"} 
-                    onChange={(e) => setAnnotationState({... annotationState, first_name: e.target.value})}
+                    disabled={relatedIdx === '0' ? false : true}
+                    onChange={(e) => setAnnotationState({... annotationState, first_name: e.target.value, submitted: false})}
                   />
                   <Input 
                     id="last_name" 
                     value={annotationState.last_name} 
                     placeholder={"Last Name"} 
-                    onChange={(e) => setAnnotationState({... annotationState, last_name: e.target.value})}
+                    disabled={relatedIdx === '0' ? false : true}
+                    onChange={(e) => setAnnotationState({... annotationState, last_name: e.target.value, submitted: false})}
                   />
                 </Space>
-                <Radio.Group value={annotationState.gender} buttonStyle="solid" style={{paddingBottom:"10px"}} onChange={(e) => setAnnotationState({... annotationState, gender: e.target.value})}>
+                <Radio.Group value={annotationState.gender} buttonStyle="solid"  disabled={relatedIdx === '0' ? false : true} style={{paddingBottom:"10px"}} onChange={(e) => setAnnotationState({... annotationState, gender: e.target.value, submitted: false})}>
                   <Radio.Button value="male">Male</Radio.Button>
                   <Radio.Button value="other">Other</Radio.Button>
                   <Radio.Button value="female">Female</Radio.Button>
@@ -170,61 +246,67 @@ export default function Home() {
                   dataSource={archetypes}
                   renderItem={item => (
                     <List.Item>
-                      <Card hoverable 
-                        id={item.title}
-                        onClick={(e) => setAnnotationState({... annotationState, archetype: e.currentTarget.id})}
-                        style={{
-                          width:"100%", 
-                          height:"70px", 
-                          marginBottom:"-10px", 
-                          textAlign:"center",
-                          backgroundColor: annotationState.archetype == item.title ? '#1890ff' : '',
-                          color: annotationState.archetype == item.title ? 'white' : ''}}
-                        bodyStyle={{
-                          paddingLeft: "0", 
-                          paddingRight: "0", 
-                        }}>
-                          {item.title}
-                      </Card>
+                      <Popover content={popoverContent(item)} placement="left" trigger={showDetails ? "hover" : "none"}>
+                        <Card hoverable={relatedIdx === '0' ? true : false}
+                          disabled={relatedIdx === '0' ? false : true}
+                          id={item.title}
+                          onClick={(e) => {if(relatedIdx === '0'){setAnnotationState({... annotationState, archetype: e.currentTarget.id, submitted: false})}}}
+                          style={{
+                            width:"100%", 
+                            height:"70px", 
+                            marginBottom:"-10px", 
+                            textAlign:"center",
+                            backgroundColor: checkArchetypeColor(item.title),
+                            color: annotationState.archetype == item.title ? 'white' : ''}}
+                          bodyStyle={{
+                            paddingLeft: "0", 
+                            paddingRight: "0", 
+                          }}>
+                            {item.title}
+                        </Card>
+                      </Popover>
                     </List.Item>
                   )}
                 />
-                <Card hoverable 
+                <Card hoverable={relatedIdx === '0' ? true : false}
                   id={'None'}
-                  onClick={(e) => setAnnotationState({... annotationState, archetype: 'None'})}
+                  disabled={relatedIdx === '0' ? false : true}
+                  onClick={(e) => {if(relatedIdx === '0'){setAnnotationState({... annotationState, archetype: 'None', submitted: false})}}}
                   style={{
                     width:"100%", 
                     height:"35px", 
                     textAlign:"center", 
-                    backgroundColor: annotationState.archetype == 'None' ? '#1890ff' : '',
+                    backgroundColor: checkArchetypeColor('None'),
                     color: annotationState.archetype == 'None' ? 'white' : ''
                   }}
                   bodyStyle={{paddingLeft: "0", paddingRight: "0", paddingTop:"6px"}}>
                     None
                 </Card>
-                <Row justify="space-between" style={{paddingTop:"30px", paddingBottom:"10px"}}>
-                  <Button 
-                    type="secondary" 
-                    onClick={() => previousAnnotation()}
-                    disabled={annotationIdx == 0 ? true : false}>
-                    Previous
-                  </Button>
-                  {annotationState.submitted && (
+                {relatedIdx === '0' && (
+                  <Row justify="space-between" style={{paddingTop:"30px", paddingBottom:"10px"}}>
                     <Button 
                       type="secondary" 
-                      onClick={() => nextAnnotation()}>
-                      Next
+                      onClick={() => previousAnnotation()}
+                      disabled={annotationIdx == 0 ? true : false}>
+                      Previous
                     </Button>
-                  )}
-                  {!annotationState.submitted && (
-                    <Button 
-                      type="primary" 
-                      onClick={() => submitAnnotation(annotationState)}
-                      disabled={checkAnnotation()}>
-                      Submit
-                    </Button>
-                  )}
-                </Row>
+                    {(annotationState.submitted || userContext.userDoc.name.localeCompare("Guest") === 0) && (
+                      <Button 
+                        type="secondary" 
+                        onClick={() => nextAnnotation()}>
+                        Next
+                      </Button>
+                    )}
+                    {(!annotationState.submitted && userContext.userDoc.name.localeCompare("Guest") !== 0 ) && (
+                      <Button 
+                        type="primary" 
+                        onClick={() => submitAnnotation(annotationState)}
+                        disabled={checkAnnotation()}>
+                        Submit
+                      </Button>
+                    )}
+                  </Row>
+                )}
               </Col>
             </Row>
           </div>
