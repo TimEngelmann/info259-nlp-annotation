@@ -11,23 +11,21 @@ export default function Register() {
   const router = useRouter();
 
   const onFinish = async (values) => {
-    console.log("Success:", values);
-
+  
     try {
       const cred = await userContext.createUser(
         values.email,
         values.password,
         values.username
       );
-      console.log(cred);
       router.push("/");
     } catch (e) {
-      console.log("Registration failed from server side");
+      // console.log("Registration failed from server side");
     }
   };
 
   const onFinishFailed = (errorInfo) => {
-    console.log("Registration Data has not been submitted", errorInfo);
+    // console.log("Registration Data has not been submitted", errorInfo);
   };
 
   return (
