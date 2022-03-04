@@ -10,19 +10,17 @@ export default function Login() {
   const router = useRouter();
 
   const onFinish = async (values) => {
-    console.log("Success:", values);
-
+    
     try {
       const cred = await userContext.login(values.username, values.password);
-      console.log(cred);
       router.push("/");
     } catch (e) {
-      console.log("Login failed from server side");
+      // console.log("Login failed from server side");
     }
   };
 
   const onFinishFailed = (errorInfo) => {
-    console.log("Login Data has not been submitted", errorInfo);
+    // console.log("Login Data has not been submitted", errorInfo);
   };
 
   return (
