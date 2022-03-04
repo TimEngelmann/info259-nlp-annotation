@@ -80,14 +80,18 @@ export default function Home() {
   const [relatedIdx, setRelatedIdx] = useState('0')
 
   useEffect(() => {
-    getAnnotations(userContext.userDoc.annotator_id, annotationsArray, setAnnotationArray)
+    getAnnotations(userContext.userDoc.annotator_id, [], setAnnotationArray)
   }, [userContext]);
 
   useEffect(() =>{
     if (annotationsArray.length > annotationIdx){
       setAnnotationState(annotationsArray[annotationIdx])
+    } else{
+      if(annotationIdx > 0){
+        getAnnotations(userContext.userDoc.annotator_id, annotationsArray, setAnnotationArray)
+      }
     }
-  }, [annotationsArray]);
+  }, [annotationIdx, annotationsArray, userContext.userDoc.annotator_id]);
 
   useEffect(() => {
     if(Object.keys(annotationState).length > 1){
@@ -101,7 +105,7 @@ export default function Home() {
       const decriptionText = document.getElementById("descriptionText");
       decriptionText.innerHTML = highlighted_text;
     }
-  }, [annotationState]);
+  }, [annotationState, relatedAnnotations]);
 
   const checkAnnotation = () => {
     if (annotationState.gender == "" || annotationState.archetype == "" || userContext.userDoc.name == ""){
@@ -138,21 +142,17 @@ export default function Home() {
     setAnnotationIdx(annotationIdx + 1)
   }
 
-  useEffect(() =>{
-    if (annotationsArray.length > annotationIdx){
-      setAnnotationState(annotationsArray[annotationIdx])
-    } else{
-      if(annotationIdx > 0){
-        getAnnotations(userContext.userDoc.annotator_id, annotationsArray, setAnnotationArray)
-      }
-    }
-  }, [annotationIdx]);
+  const switchAnnotation = (e) => {
+    relatedAnnotations[relatedIdx] = annotationState
+    setRelatedIdx(e.key)
+    setAnnotationState(relatedAnnotations[e.key])
+  }
 
   const dropdownContent = (relatedAnnotations) => (
     <Menu defaultSelectedKeys={['0']} selectedKeys={[relatedIdx]}>
       {relatedAnnotations.map((item, index) => {
         const key = index;
-        return <Menu.Item key={key} onClick={(e) => {setRelatedIdx(e.key); setAnnotationState(relatedAnnotations[e.key])}}>{item.annotator_id}</Menu.Item>;
+        return <Menu.Item key={key} onClick={(e) => switchAnnotation(e)}>{item.annotator_id}</Menu.Item>;
       })}
     </Menu>
   )
@@ -168,7 +168,7 @@ export default function Home() {
         <div className="logo" />
         <div>
           {!userContext.user && (
-            <Link href="/login">
+            <Link href="/login" passHref>
               <Button>Login</Button>
             </Link>
           )}

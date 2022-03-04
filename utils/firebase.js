@@ -40,6 +40,7 @@ const getAnnotations = async (annotator_id, annotationsArray, setAnnotationArray
         q = query(annotationCol, where("annotator", "==", ""), limit(2), orderBy('book_id'), startAfter(annotationsArray[annotationsArray.length - 1].book_id));
       }*/
       
+      // console.log("Make annotations request")
       const querySnapshot = await getDocs(q);
 
       var annotations = []
@@ -67,6 +68,7 @@ const getRelatedAnnotations = async (annotationState, setRelatedAnnotations) => 
 
   const annotationCol = collection(db, "annotations");
   
+  // console.log("Make related annotations request")
   var q = query(annotationCol, where("book_id", "==", annotationState.book_id), limit(10));
   const querySnapshot = await getDocs(q);
 
