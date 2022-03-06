@@ -34,7 +34,7 @@ const getAnnotations = async (annotator_id, annotationsArray, setAnnotationArray
     const annotationCol = collection(db, "annotations");
     
     if (typeof annotator_id !== 'undefined'){
-      var q = query(annotationCol, where("annotator_id", "==", annotator_id), where("archetype", "==", ""), limit(10));
+      var q = query(annotationCol, where("annotator_id", "==", annotator_id), where("archetype", "==", ""), orderBy("book_id"), limit(10));
 
       /*if(annotationsArray.length > 0){
         q = query(annotationCol, where("annotator", "==", ""), limit(2), orderBy('book_id'), startAfter(annotationsArray[annotationsArray.length - 1].book_id));
