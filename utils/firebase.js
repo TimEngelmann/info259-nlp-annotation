@@ -78,7 +78,7 @@ const getRelatedAnnotations = async (annotationState, setRelatedAnnotations) => 
 
   var annotations = [annotationState]
   querySnapshot.forEach((doc) => {
-    if(annotationState.id !== doc.id){
+    if(annotationState.id !== doc.id && doc.data().archetype != ""){
       var annotation = doc.data()
       annotation.id = doc.id
       annotations.push(annotation)
