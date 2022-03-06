@@ -1,6 +1,6 @@
 import Head from "next/head";
 import { useContext, useEffect, useState } from "react";
-import { Button, Row, Col, Input, Space, Radio, Card, List, Layout, Spin, Typography, Result, Popover, Switch, Dropdown, Menu } from "antd";
+import { Button, Row, Col, Input, Space, Radio, Card, List, Layout, Spin, Typography, Result, Popover, Switch, Dropdown, Menu, Progress } from "antd";
 import { DownOutlined, UserOutlined } from '@ant-design/icons';
 
 import Link from "next/link";
@@ -73,6 +73,7 @@ const popoverContent = (item) => (
 export default function Home() {
   const userContext = useContext(AuthUserContext);
   const [annotationIdx, setAnnotationIdx] = useState(0)
+  const [sessionGoal, setSessionGoal] = useState(50)
   const [showDetails, setShowDetails] = useState(true)
   const [annotationsArray, setAnnotationArray] = useState([])
   const [annotationState, setAnnotationState] = useState({})
@@ -127,7 +128,7 @@ export default function Home() {
   }
 
   const submitAnnotation = () => {
-    updateAnnotation(annotationState)
+    updateAnnotation(annotationState, userContext.user)
     annotationState.submitted = true
     annotationsArray[annotationIdx] = annotationState
     setAnnotationIdx(annotationIdx + 1)
@@ -198,6 +199,24 @@ export default function Home() {
               </Button>
             ]}
           />
+        )}
+        {Object.keys(annotationState).length > 1 && (
+          <div style={{padding: "24px", maxWidth: "1200px", background:'white', marginTop: "10px"}}>
+            <Row>
+              <Col flex="60px"><Text style={{color:"lightgrey"}}>Overall</Text></Col>
+              <Col flex="15px" style={{textAlign: 'right'}}><Text style={{color:"lightgrey"}}>{userContext.userDoc.annotation_count + annotationIdx}</Text></Col>
+              <Col flex="15px" style={{textAlign: 'center'}}><Text style={{color:"lightgrey"}}>/</Text></Col>
+              <Col flex="40px"><Text style={{color:"lightgrey"}}>{userContext.userDoc.assigned_count}</Text></Col>
+              <Col flex="auto"><Progress className="grey-text" percent={(((userContext.userDoc.annotation_count + annotationIdx)/ userContext.userDoc.assigned_count) * 100).toPrecision(2)} /></Col>
+            </Row>
+            <Row>
+              <Col flex="60px"><Text style={{color:"lightgrey"}}>Session</Text></Col>
+              <Col flex="15px" style={{textAlign: 'right'}}><Text style={{color:"lightgrey"}}>{annotationIdx}</Text></Col>
+              <Col flex="15px" style={{textAlign: 'center'}}><Text style={{color:"lightgrey"}}>/</Text></Col>
+              <Col flex="40px"><Input style={{padding: 0, margin: 0, color: "lightgrey", width: "30px", textAlign: "center"}} value={sessionGoal} onChange={(e) => setSessionGoal(e.target.value)}/></Col>
+              <Col flex="auto"><Progress className="grey-text" percent={(((annotationIdx)/sessionGoal) * 100).toPrecision(2)} /></Col>
+            </Row>
+          </div>
         )}
         {Object.keys(annotationState).length > 1 && (
           <div className="site-layout-content">

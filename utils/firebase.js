@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, doc, getDocs, setDoc, getDoc, onSnapshot, startAfter } from "firebase/firestore";
+import { getFirestore, collection, doc, getDocs, setDoc, getDoc, onSnapshot, startAfter, increment } from "firebase/firestore";
+
 import { query, where, orderBy, limit } from "firebase/firestore"; 
 import { getAuth } from "firebase/auth";
 
@@ -18,7 +19,7 @@ const auth = getAuth(app);
 
 // Annotation Functions
 
-const updateAnnotation = (annotationState) => {
+const updateAnnotation = (annotationState, user) => {
   const annotationRef = doc(db, "annotations", annotationState.id);
   setDoc(annotationRef, {  
     first_name: annotationState.first_name, 
@@ -27,6 +28,9 @@ const updateAnnotation = (annotationState) => {
     archetype: annotationState.archetype} ,
     { merge: true },
     );
+  
+  const userRef = doc(db, "users", user.uid);
+  setDoc(userRef, {annotation_count: increment(1)}, { merge: true });
 }
 
 const getAnnotations = async (annotator_id, annotationsArray, setAnnotationArray) => { 
