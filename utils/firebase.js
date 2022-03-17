@@ -3,6 +3,7 @@ import { getFirestore, collection, doc, getDocs, setDoc, getDoc, onSnapshot, sta
 
 import { query, where, orderBy, limit } from "firebase/firestore"; 
 import { getAuth } from "firebase/auth";
+import { archetypes } from "../components/constants";
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
@@ -20,12 +21,21 @@ const auth = getAuth(app);
 // Annotation Functions
 
 const updateAnnotation = (annotationState, user) => {
+
+  // match label to archetype
+  const archetype = archetypes.find(archetype => archetype.title === annotationState.archetype);
+  var label = 'NONE'
+  if (typeof archetype !== 'undefined'){
+    label = archetype.label
+  }
+
   const annotationRef = doc(db, "annotations", annotationState.id);
   setDoc(annotationRef, {  
     first_name: annotationState.first_name, 
     last_name: annotationState.last_name,
     gender: annotationState.gender,
-    archetype: annotationState.archetype} ,
+    archetype: annotationState.archetype,
+    label: label,},
     { merge: true },
     );
   

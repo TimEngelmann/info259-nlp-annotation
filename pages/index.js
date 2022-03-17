@@ -1,13 +1,13 @@
 import Head from "next/head";
 import { useContext, useEffect, useState } from "react";
 import { Button, Row, Col, Input, Space, Radio, Card, List, Layout, Spin, Typography, Result, Popover, Switch, Dropdown, Menu, Progress } from "antd";
-import { DownOutlined, UserOutlined } from '@ant-design/icons';
+import { DownOutlined, UserOutlined, DragOutlined, IssuesCloseOutlined, IdcardOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 
 import Link from "next/link";
 import { AuthUserContext } from "../utils/auth";
 import { getAnnotations, getAnnotationsLive, getRelatedAnnotations, updateAnnotation } from "../utils/firebase";
 
-import { archetypes } from "../components/constants";
+import { archetypes, labels } from "../components/constants";
 
 const { Header, Content } = Layout;
 const { Text, Title } = Typography;
@@ -70,11 +70,18 @@ const popoverContent = (item) => (
   </div>
 );
 
+const popoverContentLabel = (item) => (
+  <div style={{maxWidth: "300px"}}>
+    <Title level={5}>{item.title}</Title>
+    <Text>{item.details}</Text>
+  </div>
+);
+
 export default function Home() {
   const userContext = useContext(AuthUserContext);
   const [annotationIdx, setAnnotationIdx] = useState(0)
   const [sessionGoal, setSessionGoal] = useState(50)
-  const [showDetails, setShowDetails] = useState(true)
+  const [showDetails, setShowDetails] = useState(0)
   const [annotationsArray, setAnnotationArray] = useState([])
   const [annotationState, setAnnotationState] = useState({})
   const [relatedAnnotations, setRelatedAnnotations] = useState([])
@@ -124,7 +131,7 @@ export default function Home() {
       }
     } 
 
-    return ""
+    return 'white'
   }
 
   const submitAnnotation = () => {
@@ -156,6 +163,56 @@ export default function Home() {
         return <Menu.Item key={key} onClick={(e) => switchAnnotation(e)}>{item.annotator_id}</Menu.Item>;
       })}
     </Menu>
+  )
+  
+  const helpContent = () => (
+    <div>
+      <Title level={5}>Show description of:</Title>
+      <Radio.Group onChange={(e) => setShowDetails(e.target.value)} value={showDetails}>
+        <Space direction="vertical">
+          <Radio value={1}><DragOutlined/> Labels</Radio>
+          <Radio value={2}><IdcardOutlined/> Archetypes</Radio>
+          <Radio value={0}><IssuesCloseOutlined/> Nothing</Radio>
+        </Space>
+      </Radio.Group>
+    </div>
+  )
+
+  const renderArchetypes = (label) => (
+    <Popover content={popoverContentLabel(label)} placement="left" trigger={showDetails === 1 ? "hover" : "none"}>
+      <Card title={<div><Text>{label.title}</Text><Text style={{fontWeight: "normal", fontSize: 14, color:"lightgrey"}}>{' - ' + label.description}</Text></div>} size="small" 
+        style={{textAlign: 'left', backgroundColor: "#FBFBFB"}} 
+        bodyStyle={{padding: 0, margin: 0}}
+      >
+        {archetypes.map((item, index) => {
+          if(item.label === label.title){
+            return (
+              <Popover content={popoverContent(item)} placement="left" trigger={showDetails === 2 ? "hover" : "none"}>
+                <Card.Grid hoverable={relatedIdx === '0' ? true : false}
+                  key={index}
+                  disabled={relatedIdx === '0' ? false : true}
+                  id={item.title}
+                  onClick={(e) => {if(relatedIdx === '0'){setAnnotationState({... annotationState, archetype: e.currentTarget.id, submitted: false})}}}
+                  style={{
+                    width:"33.33%", 
+                    height:"30px",
+                    margin: "auto",
+                    padding: 5, 
+                    textAlign:"center",
+                    backgroundColor: checkArchetypeColor(item.title),
+                    color: annotationState.archetype == item.title ? 'white' : ''}}
+                  bodyStyle={{
+                    paddingLeft: "0", 
+                    paddingRight: "0", 
+                  }}>
+                    {item.title}
+                </Card.Grid>
+              </Popover>
+            )
+          }
+        })}
+      </Card>
+    </Popover>
   )
 
   return (
@@ -234,24 +291,23 @@ export default function Home() {
                       </Button>
                     </Dropdown>
                   )}
-                  <Space>
-                    <Text style={{color:"lightgrey"}}>Explain archetypes:</Text>
-                    <Switch style={{marginBottom:"2px"}} size="small" defaultChecked onChange={() => setShowDetails(!showDetails)}/>
-                  </Space>
+                  <Popover content={helpContent} trigger="click" placement="left">
+                    <QuestionCircleOutlined style={{color: "lightgrey"}}/>
+                  </Popover>
                 </Row>
                 <Space style={{paddingBottom:"10px"}}>
                   <Input 
                     id="first_name" 
                     value={annotationState.first_name} 
                     placeholder={"First Name"} 
-                    disabled={relatedIdx === '0' ? false : true}
+                    disabled={relatedIdx === '0' ? true : true}
                     onChange={(e) => setAnnotationState({... annotationState, first_name: e.target.value, submitted: false})}
                   />
                   <Input 
                     id="last_name" 
                     value={annotationState.last_name} 
                     placeholder={"Last Name"} 
-                    disabled={relatedIdx === '0' ? false : true}
+                    disabled={relatedIdx === '0' ? true : true}
                     onChange={(e) => setAnnotationState({... annotationState, last_name: e.target.value, submitted: false})}
                   />
                 </Space>
@@ -261,29 +317,12 @@ export default function Home() {
                   <Radio.Button value="female">Female</Radio.Button>
                 </Radio.Group>
                 <List
-                  grid={{ gutter: 5, column: 3 }}
-                  dataSource={archetypes}
-                  renderItem={item => (
+                  grid={{ gutter: 5, column: 1 }}
+                  dataSource={labels}
+                  style={{backgroundColor: 'transparent'}}
+                  renderItem={label => (
                     <List.Item>
-                      <Popover content={popoverContent(item)} placement="left" trigger={showDetails ? "hover" : "none"}>
-                        <Card hoverable={relatedIdx === '0' ? true : false}
-                          disabled={relatedIdx === '0' ? false : true}
-                          id={item.title}
-                          onClick={(e) => {if(relatedIdx === '0'){setAnnotationState({... annotationState, archetype: e.currentTarget.id, submitted: false})}}}
-                          style={{
-                            width:"100%", 
-                            height:"70px", 
-                            marginBottom:"-10px", 
-                            textAlign:"center",
-                            backgroundColor: checkArchetypeColor(item.title),
-                            color: annotationState.archetype == item.title ? 'white' : ''}}
-                          bodyStyle={{
-                            paddingLeft: "0", 
-                            paddingRight: "0", 
-                          }}>
-                            {item.title}
-                        </Card>
-                      </Popover>
+                      {renderArchetypes(label)}
                     </List.Item>
                   )}
                 />
