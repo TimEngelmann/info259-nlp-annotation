@@ -82,28 +82,30 @@ export default function Home() {
   const [annotationIdx, setAnnotationIdx] = useState(0)
   const [sessionGoal, setSessionGoal] = useState(50)
   const [showDetails, setShowDetails] = useState(0)
+  const [batch, setBatch] = useState("exploration")
   const [annotationsArray, setAnnotationArray] = useState([])
   const [annotationState, setAnnotationState] = useState({})
   const [relatedAnnotations, setRelatedAnnotations] = useState([])
   const [relatedIdx, setRelatedIdx] = useState('0')
 
   useEffect(() => {
-    getAnnotations(userContext.userDoc.annotator_id, [], setAnnotationArray)
-  }, [userContext]);
+    setAnnotationIdx(0); setAnnotationArray([]); setRelatedAnnotations([]); setRelatedIdx('0'); setAnnotationState({});
+    getAnnotations(userContext.userDoc.annotator_id, [], batch, setAnnotationArray)
+  }, [userContext, batch]);
 
   useEffect(() =>{
     if (annotationsArray.length > annotationIdx){
       setAnnotationState(annotationsArray[annotationIdx])
     } else{
       if(annotationIdx > 0){
-        getAnnotations(userContext.userDoc.annotator_id, annotationsArray, setAnnotationArray)
+        getAnnotations(userContext.userDoc.annotator_id, annotationsArray, batch, setAnnotationArray)
       }
     }
-  }, [annotationIdx, annotationsArray, userContext.userDoc.annotator_id]);
+  }, [annotationIdx, annotationsArray, batch, userContext.userDoc.annotator_id]);
 
   useEffect(() => {
     if(Object.keys(annotationState).length > 1){
-      if(annotationState.adjudicated === "adjudicated"){
+      if(annotationState.adjudicated === "adjudicated" && annotationState.batch === batch){
         if(relatedAnnotations.length === 0 || relatedAnnotations[0].book_id !== annotationState.book_id){
           getRelatedAnnotations(annotationState, setRelatedAnnotations)
         }
@@ -113,7 +115,7 @@ export default function Home() {
       const decriptionText = document.getElementById("descriptionText");
       decriptionText.innerHTML = highlighted_text;
     }
-  }, [annotationState, relatedAnnotations]);
+  }, [annotationState, relatedAnnotations, batch]);
 
   const checkAnnotation = () => {
     if (annotationState.gender == "" || annotationState.archetype == "" || userContext.userDoc.name == ""){
@@ -182,12 +184,12 @@ export default function Home() {
     <Popover content={popoverContentLabel(label)} placement="left" trigger={showDetails === 1 ? "hover" : "none"}>
       <Card title={<div><Text>{label.title}</Text><Text style={{fontWeight: "normal", fontSize: 14, color:"lightgrey"}}>{' - ' + label.description}</Text></div>} size="small" 
         style={{textAlign: 'left', backgroundColor: "#FBFBFB"}} 
-        bodyStyle={{padding: 0, margin: 0}}
+        bodystyle={{padding: 0, margin: 0}}
       >
         {archetypes.map((item, index) => {
           if(item.label === label.title){
             return (
-              <Popover content={popoverContent(item)} placement="left" trigger={showDetails === 2 ? "hover" : "none"}>
+              <Popover key={index} content={popoverContent(item)} placement="left" trigger={showDetails === 2 ? "hover" : "none"}>
                 <Card.Grid hoverable={relatedIdx === '0' ? true : false}
                   key={index}
                   disabled={relatedIdx === '0' ? false : true}
@@ -201,7 +203,7 @@ export default function Home() {
                     textAlign:"center",
                     backgroundColor: checkArchetypeColor(item.title),
                     color: annotationState.archetype == item.title ? 'white' : ''}}
-                  bodyStyle={{
+                  bodystyle={{
                     paddingLeft: "0", 
                     paddingRight: "0", 
                   }}>
@@ -245,16 +247,25 @@ export default function Home() {
           <Result
             status="success"
             title="Congratulations!"
-            subTitle="You've annotated all the data assigned to you"
-            extra={[
-              <Button 
-                type="secondary" 
-                key={"previous"}
-                onClick={() => previousAnnotation()}
-                disabled={annotationIdx == 0 ? true : false}>
-                Previous
-              </Button>
-            ]}
+            subTitle="You've annotated all the data in this batch"
+            extra={
+              <Space direction="vertical">
+                <Button 
+                  type="secondary" 
+                  key={"previous"}
+                  onClick={() => previousAnnotation()}
+                  disabled={annotationIdx == 0 ? true : false}>
+                  Previous
+                </Button>
+                <Switch 
+                  checkedChildren="Evaluation" 
+                  unCheckedChildren="Exploration" 
+                  defaultChecked={(batch === "exploration") ? false : true}
+                  size="small" 
+                  onChange={(checked) => {if(checked){setBatch('evaluation')}else{setBatch('exploration')}}}
+                  style={{ background: "lightgrey" }}/>
+              </Space>
+            }
           />
         )}
         {Object.keys(annotationState).length > 1 && (
@@ -291,9 +302,18 @@ export default function Home() {
                       </Button>
                     </Dropdown>
                   )}
-                  <Popover content={helpContent} trigger="click" placement="left">
-                    <QuestionCircleOutlined style={{color: "lightgrey"}}/>
-                  </Popover>
+                  <Space>
+                    <Switch 
+                      checkedChildren="Evaluation" 
+                      unCheckedChildren="Exploration" 
+                      defaultChecked={(batch === "exploration") ? false : true}
+                      size="small" 
+                      onChange={(checked) => {if(checked){setBatch('evaluation')}else{setBatch('exploration')}}}
+                      style={{ background: "lightgrey" }}/>
+                    <Popover content={helpContent} trigger="click" placement="left">
+                      <QuestionCircleOutlined style={{color: "lightgrey"}}/>
+                    </Popover>
+                  </Space>
                 </Row>
                 <Space style={{paddingBottom:"10px"}}>
                   <Input 
