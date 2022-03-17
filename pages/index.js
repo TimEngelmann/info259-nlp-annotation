@@ -184,7 +184,7 @@ export default function Home() {
     <Popover content={popoverContentLabel(label)} placement="left" trigger={showDetails === 1 ? "hover" : "none"}>
       <Card title={<div><Text>{label.title}</Text><Text style={{fontWeight: "normal", fontSize: 14, color:"lightgrey"}}>{' - ' + label.description}</Text></div>} size="small" 
         style={{textAlign: 'left', backgroundColor: "#FBFBFB"}} 
-        bodystyle={{padding: 0, margin: 0}}
+        bodyStyle={{padding: 0, margin: 0}}
       >
         {archetypes.map((item, index) => {
           if(item.label === label.title){
