@@ -13,12 +13,12 @@ import {
 const empty_user = { name: "" };
 
 export const AuthUserContext = React.createContext(null);
-export const withUser = (Wrapped) => (props) =>
+export const withUser = (Wrapped) => function(props){
   (
     <AuthUserContext.Consumer>
       {(userContext) => <Wrapped {...props} userContext={userContext} />}
     </AuthUserContext.Consumer>
-  );
+  );}
 
 export const AuthUserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -27,20 +27,25 @@ export const AuthUserProvider = ({ children }) => {
 
   // reloads user state
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-
-      if (user) {
-        const docRef = doc(db, "users", user.uid);
-        const docSnap = await getDoc(docRef);
-        setUserDoc(docSnap.data());
-      } else {
-        setUserDoc(empty_user);
-        router.push("/login");
-      }
-    });
-
-    return unsubscribe;
+    if(navigator.onLine){
+      const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        setUser(user);
+  
+        if (user) {
+          const docRef = doc(db, "users", user.uid);
+          const docSnap = await getDoc(docRef);
+          setUserDoc(docSnap.data());
+        } else {
+          setUserDoc(empty_user);
+          router.push("/login");
+        }
+      });
+  
+      return unsubscribe;
+    }else{
+      router.push("/offline")
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // signs in user

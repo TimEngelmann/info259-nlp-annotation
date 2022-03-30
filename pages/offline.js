@@ -1,16 +1,17 @@
 import Head from "next/head";
 import { useContext, useEffect, useState } from "react";
-import { Button, Row, Col, Input, Space, Radio, Card, List, Layout, Spin, Typography, Result, Popover, Switch, Dropdown, Menu, Progress } from "antd";
-import { DownOutlined, UserOutlined, DragOutlined, IssuesCloseOutlined, IdcardOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { Button, Row, Col, Input, Space, Radio, Card, List, Layout, Spin, Typography, Result, Popover, Switch, Dropdown, Menu, Progress, Upload, message } from "antd";
+import { DownOutlined, UserOutlined, DragOutlined, IssuesCloseOutlined, IdcardOutlined, QuestionCircleOutlined, InboxOutlined } from '@ant-design/icons';
 
 import Link from "next/link";
 import { AuthUserContext } from "../utils/auth";
-import { getAnnotations, getAnnotationsLive, getRelatedAnnotations, updateAnnotation } from "../utils/firebase";
+import { getAnnotations, getRelatedAnnotations, updateAnnotation, saveAnnotations } from "../utils/localdata";
 
 import { archetypes, labels } from "../components/constants";
 
 const { Header, Content } = Layout;
 const { Text, Title } = Typography;
+const { Dragger } = Upload;
 
 function highlightedString(original_text, first_name, last_name) {
 
@@ -88,17 +89,14 @@ export default function Home() {
   const [relatedAnnotations, setRelatedAnnotations] = useState([])
   const [relatedIdx, setRelatedIdx] = useState('0')
 
-  useEffect(() => {
-    setAnnotationIdx(0); setAnnotationArray([]); setRelatedAnnotations([]); setRelatedIdx('0'); setAnnotationState({});
-    getAnnotations(userContext.userDoc.annotator_id, [], batch, setAnnotationArray)
-  }, [userContext, batch]);
-
   useEffect(() =>{
     if (annotationsArray.length > annotationIdx){
       setAnnotationState(annotationsArray[annotationIdx])
     } else{
       if(annotationIdx > 0){
-        getAnnotations(userContext.userDoc.annotator_id, annotationsArray, batch, setAnnotationArray)
+        // getAnnotations(userContext.userDoc.annotator_id, annotationsArray, batch, setAnnotationArray)
+        const annotation_empty = {"dummy": "finished"}
+        annotationsArray.push(annotation_empty)
       }
     }
   }, [annotationIdx, annotationsArray, batch, userContext.userDoc.annotator_id]);
@@ -118,7 +116,7 @@ export default function Home() {
   }, [annotationState, relatedAnnotations, batch]);
 
   const checkAnnotation = () => {
-    if (annotationState.gender == "" || annotationState.archetype == "" || userContext.userDoc.name == ""){
+    if (annotationState.gender == "" || annotationState.archetype == ""){
       return true
     } 
     return false
@@ -137,7 +135,17 @@ export default function Home() {
   }
 
   const submitAnnotation = () => {
+    
     updateAnnotation(annotationState, userContext.user)
+
+    // match label to archetype
+    const archetype = archetypes.find(archetype => archetype.title === annotationState.archetype);
+    var label = 'NONE'
+    if (typeof archetype !== 'undefined'){
+      label = archetype.label
+    }
+    annotationState.label = label
+
     annotationState.submitted = true
     annotationsArray[annotationIdx] = annotationState
     setAnnotationIdx(annotationIdx + 1)
@@ -217,6 +225,23 @@ export default function Home() {
     </Popover>
   )
 
+  const uploadProps = {
+    accept: ".txt, .csv",
+    name: 'file',
+    multiple: false,
+    beforeUpload(file){
+      const reader = new FileReader();
+
+      reader.onload = e => {
+        getAnnotations(e.target.result, setAnnotationArray, setAnnotationIdx)
+      };
+      reader.readAsText(file);
+
+      // Prevent upload
+      return false;
+    },
+  };
+
   return (
     <Layout className="layout">
       <Head>
@@ -239,13 +264,26 @@ export default function Home() {
               </Button>
             </div>
           )}
-          <Link href="/offline" passHref>
-            <Text style={{color:"lightgrey", cursor:"pointer"}}>online</Text>
+          <Link href="/" passHref>
+            <Text style={{color:"lightgrey", cursor:"pointer"}}>offline</Text>
           </Link>
         </Row>
       </Header>
       <Content style={{ padding: '0 50px', minHeight: 'calc(100vh - 65px)', margin:"auto"}}>
-        {Object.keys(annotationState).length === 0 && (<Spin style={{marginTop: "50px"}}/>)}
+        {Object.keys(annotationState).length === 0 && (
+          <Dragger {...uploadProps} style={{marginTop: "50px", padding: 30}}>
+            <p className="ant-upload-drag-icon">
+              <InboxOutlined />
+            </p>
+            <p className="ant-upload-text">Click or drag file to this area to upload</p>
+            <p className="ant-upload-hint">
+              CSV must include following header:
+            </p>
+            <p className="ant-upload-hint" style={{fontSize:9}}>
+              book_id,text,first_name,last_name,gender,batch,archetype,label,adjudicated,annotator_id
+            </p>
+          </Dragger>
+        )}
         {Object.keys(annotationState).length === 1 && (
           <Result
             status="success"
@@ -260,13 +298,6 @@ export default function Home() {
                   disabled={annotationIdx == 0 ? true : false}>
                   Previous
                 </Button>
-                <Switch 
-                  checkedChildren="Evaluation" 
-                  unCheckedChildren="Exploration" 
-                  defaultChecked={(batch === "exploration") ? false : true}
-                  size="small" 
-                  onChange={(checked) => {if(checked){setBatch('evaluation')}else{setBatch('exploration')}}}
-                  style={{ background: "lightgrey" }}/>
               </Space>
             }
           />
@@ -275,10 +306,10 @@ export default function Home() {
           <div style={{padding: "24px", maxWidth: "1200px", background:'white', marginTop: "10px"}}>
             <Row>
               <Col flex="60px"><Text style={{color:"lightgrey"}}>Overall</Text></Col>
-              <Col flex="15px" style={{textAlign: 'right'}}><Text style={{color:"lightgrey"}}>{userContext.userDoc.annotation_count + annotationIdx}</Text></Col>
+              <Col flex="15px" style={{textAlign: 'right'}}><Text style={{color:"lightgrey"}}>{annotationIdx}</Text></Col>
               <Col flex="15px" style={{textAlign: 'center'}}><Text style={{color:"lightgrey"}}>/</Text></Col>
-              <Col flex="40px"><Text style={{color:"lightgrey"}}>{userContext.userDoc.assigned_count}</Text></Col>
-              <Col flex="auto"><Progress className="grey-text" percent={(((userContext.userDoc.annotation_count + annotationIdx)/ userContext.userDoc.assigned_count) * 100).toPrecision(2)} /></Col>
+              <Col flex="40px"><Text style={{color:"lightgrey"}}>{annotationsArray.length}</Text></Col>
+              <Col flex="auto"><Progress className="grey-text" percent={(((annotationIdx)/ annotationsArray.length) * 100).toPrecision(2)} /></Col>
             </Row>
             <Row>
               <Col flex="60px"><Text style={{color:"lightgrey"}}>Session</Text></Col>
@@ -306,13 +337,6 @@ export default function Home() {
                     </Dropdown>
                   )}
                   <Space>
-                    <Switch 
-                      checkedChildren="Evaluation" 
-                      unCheckedChildren="Exploration" 
-                      defaultChecked={(batch === "exploration") ? false : true}
-                      size="small" 
-                      onChange={(checked) => {if(checked){setBatch('evaluation')}else{setBatch('exploration')}}}
-                      style={{ background: "lightgrey" }}/>
                     <Popover content={helpContent} trigger="click" placement="left">
                       <QuestionCircleOutlined style={{color: "lightgrey"}}/>
                     </Popover>
@@ -352,7 +376,7 @@ export default function Home() {
                 <Card hoverable={relatedIdx === '0' ? true : false}
                   id={'None'}
                   disabled={relatedIdx === '0' ? false : true}
-                  onClick={(e) => {if(relatedIdx === '0'){setAnnotationState({... annotationState, archetype: 'None', submitted: false})}}}
+                  onClick={(e) => {if(relatedIdx === '0'){setAnnotationState({... annotationState, archetype: 'None', label: 'NONE', submitted: false})}}}
                   style={{
                     width:"100%", 
                     height:"35px", 
@@ -371,14 +395,20 @@ export default function Home() {
                       disabled={annotationIdx == 0 ? true : false}>
                       Previous
                     </Button>
-                    {(annotationState.submitted || userContext.userDoc.name.localeCompare("Guest") === 0) && (
+                    <Button 
+                      type="secondary" 
+                      onClick={() => saveAnnotations(annotationsArray)}
+                      disabled={annotationIdx == 0 ? true : false}>
+                      Save CSV
+                    </Button>
+                    {(annotationState.submitted) && (
                       <Button 
                         type="secondary" 
                         onClick={() => nextAnnotation()}>
                         Next
                       </Button>
                     )}
-                    {(!annotationState.submitted && userContext.userDoc.name.localeCompare("Guest") !== 0 ) && (
+                    {(!annotationState.submitted) && (
                       <Button 
                         type="primary" 
                         onClick={() => submitAnnotation(annotationState)}
