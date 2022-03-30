@@ -251,7 +251,7 @@ export default function Home() {
       </Head>
       <Header>
         <div className="logo" />
-        <div>
+        <Row justify="space-between" align="middle">
           {!userContext.user && (
             <Link href="/login" passHref>
               <Button>Login</Button>
@@ -264,7 +264,10 @@ export default function Home() {
               </Button>
             </div>
           )}
-        </div>
+          <Link href="/" passHref>
+            <Text style={{color:"lightgrey", cursor:"pointer"}}>offline</Text>
+          </Link>
+        </Row>
       </Header>
       <Content style={{ padding: '0 50px', minHeight: 'calc(100vh - 65px)', margin:"auto"}}>
         {Object.keys(annotationState).length === 0 && (
@@ -274,7 +277,10 @@ export default function Home() {
             </p>
             <p className="ant-upload-text">Click or drag file to this area to upload</p>
             <p className="ant-upload-hint">
-              Support only for single csv file
+              CSV must include following header:
+            </p>
+            <p className="ant-upload-hint" style={{fontSize:9}}>
+              book_id,text,first_name,last_name,gender,batch,archetype,label,adjudicated,annotator_id
             </p>
           </Dragger>
         )}

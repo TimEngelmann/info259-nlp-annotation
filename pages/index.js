@@ -226,7 +226,7 @@ export default function Home() {
       </Head>
       <Header>
         <div className="logo" />
-        <div>
+        <Row justify="space-between" align="middle">
           {!userContext.user && (
             <Link href="/login" passHref>
               <Button>Login</Button>
@@ -239,7 +239,10 @@ export default function Home() {
               </Button>
             </div>
           )}
-        </div>
+          <Link href="/offline" passHref>
+            <Text style={{color:"lightgrey", cursor:"pointer"}}>online</Text>
+          </Link>
+        </Row>
       </Header>
       <Content style={{ padding: '0 50px', minHeight: 'calc(100vh - 65px)', margin:"auto"}}>
         {Object.keys(annotationState).length === 0 && (<Spin style={{marginTop: "50px"}}/>)}
