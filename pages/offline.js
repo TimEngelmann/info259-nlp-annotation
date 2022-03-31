@@ -265,7 +265,7 @@ export default function Home() {
             </div>
           )}
           <Link href="/" passHref>
-            <Button style={{color:"lightgrey", cursor:"pointer", backgroundColor: "transparent", border: "None"}}>online</Button>
+            <Button style={{color:"lightgrey", cursor:"pointer", backgroundColor: "transparent", border: "None"}}>offline</Button>
           </Link>
         </Row>
       </Header>
